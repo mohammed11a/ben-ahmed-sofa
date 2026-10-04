@@ -9,27 +9,35 @@ import {
   Wifi, 
   WifiOff, 
   Smartphone,
-  ShieldCheck
+  ShieldCheck,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
+import { getAudioSettings } from '../services/soundService';
 
 interface NavbarProps {
   currentTab: 'dashboard' | 'kanban' | 'orders';
   setCurrentTab: (tab: 'dashboard' | 'kanban' | 'orders') => void;
   onNewOrder: () => void;
   onOpenBackup: () => void;
+  onOpenAudioSettings: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentTab,
   setCurrentTab,
   onNewOrder,
-  onOpenBackup
+  onOpenBackup,
+  onOpenAudioSettings
 }) => {
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState<boolean>(false);
+  const [isAudioEnabled, setIsAudioEnabled] = useState<boolean>(true);
 
   useEffect(() => {
+    setIsAudioEnabled(getAudioSettings().enabled);
+
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
@@ -145,6 +153,22 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="hidden lg:inline">{isOnline ? 'متصل' : 'أوفلاين'}</span>
             </div>
 
+            {/* Audio Settings Button */}
+            <button
+              onClick={() => {
+                onOpenAudioSettings();
+                setTimeout(() => setIsAudioEnabled(getAudioSettings().enabled), 300);
+              }}
+              className={`p-2 rounded-xl text-xs font-semibold border transition-all ${
+                isAudioEnabled
+                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/20'
+                  : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'
+              }`}
+              title="تخصيص الإشعارات الصوتية والنطق"
+            >
+              {isAudioEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
+
             {/* Install PWA Button */}
             {!isInstalled && (
               <button
@@ -208,6 +232,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <FileText className="w-4 h-4" />
             <span>الطلبات</span>
+          </button>
+          <button
+            onClick={onOpenAudioSettings}
+            className={`flex flex-col items-center gap-1 py-1 px-3 rounded-lg text-xs font-medium ${
+              isAudioEnabled ? 'text-amber-400' : 'text-slate-400'
+            }`}
+          >
+            {isAudioEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            <span>الصوت</span>
           </button>
         </div>
 

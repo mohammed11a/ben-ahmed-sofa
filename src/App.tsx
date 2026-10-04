@@ -8,6 +8,11 @@ import {
   updateOrderStatus, 
   calculateStats 
 } from './services/storageService';
+import { 
+  notifyOrderCreated, 
+  notifyStatusAdvanced, 
+  notifyDepositReceived 
+} from './services/soundService';
 import { Navbar } from './components/Navbar';
 import { Dashboard } from './components/Dashboard';
 import { KanbanBoard } from './components/KanbanBoard';
@@ -15,6 +20,7 @@ import { OrderList } from './components/OrderList';
 import { OrderFormModal } from './components/OrderFormModal';
 import { InvoicePrintModal } from './components/InvoicePrintModal';
 import { BackupModal } from './components/BackupModal';
+import { AudioSettingsModal } from './components/AudioSettingsModal';
 
 export const App: React.FC = () => {
   const [orders, setOrders] = useState<SofaOrder[]>([]);
@@ -39,6 +45,7 @@ export const App: React.FC = () => {
   const [orderToPrint, setOrderToPrint] = useState<SofaOrder | null>(null);
 
   const [isBackupOpen, setIsBackupOpen] = useState<boolean>(false);
+  const [isAudioOpen, setIsAudioOpen] = useState<boolean>(false);
 
   // Load orders on start
   const refreshData = () => {
@@ -55,8 +62,13 @@ export const App: React.FC = () => {
     let updated: SofaOrder[];
     if (orderToEdit) {
       updated = updateOrder(savedOrder);
+      if (savedOrder.payment.deposit > orderToEdit.payment.deposit) {
+        const added = savedOrder.payment.deposit - orderToEdit.payment.deposit;
+        notifyDepositReceived(added, savedOrder.customer.name);
+      }
     } else {
       updated = addOrder(savedOrder);
+      notifyOrderCreated(savedOrder);
     }
     setOrders(updated);
     setStats(calculateStats(updated));
@@ -64,6 +76,10 @@ export const App: React.FC = () => {
   };
 
   const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
+    const target = orders.find(o => o.id === orderId);
+    if (target) {
+      notifyStatusAdvanced(target, newStatus);
+    }
     const updated = updateOrderStatus(orderId, newStatus);
     setOrders(updated);
     setStats(calculateStats(updated));
@@ -97,6 +113,7 @@ export const App: React.FC = () => {
           setIsFormOpen(true);
         }}
         onOpenBackup={() => setIsBackupOpen(true)}
+        onOpenAudioSettings={() => setIsAudioOpen(true)}
       />
 
       {/* Main Content View */}
@@ -161,9 +178,14 @@ export const App: React.FC = () => {
         onReload={refreshData}
       />
 
+      <AudioSettingsModal
+        isOpen={isAudioOpen}
+        onClose={() => setIsAudioOpen(false)}
+      />
+
       {/* Footer */}
       <footer className="no-print border-t border-slate-900 bg-slate-950 py-6 text-center text-xs text-slate-500">
-        <p>© 2026 تطبيق مفروشات وتفصيل كنب بن أحمد — يعمل بتقنية PWA وبدون اتصال بالإنترنت</p>
+        <p>© 2026 تطبيق مفروشات وتفصيل كنب بن أحمد — يعمل بتقنية PWA وبدون اتصال بالإنترنت مع دعم الإشعارات الصوتية</p>
       </footer>
 
     </div>
